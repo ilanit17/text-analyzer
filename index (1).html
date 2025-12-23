@@ -1,0 +1,677 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>מנתח טקסטים להבנת הנקרא</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700&display=swap');
+        body { font-family: 'Heebo', sans-serif; }
+    </style>
+</head>
+<body class="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50">
+    <div id="app" class="p-4">
+        <div class="max-w-4xl mx-auto">
+            <!-- Header -->
+            <div class="text-center mb-8">
+                <div class="flex items-center justify-center gap-3 mb-2">
+                    <span class="text-4xl">📚</span>
+                    <h1 class="text-3xl font-bold text-gray-800">מנתח טקסטים להבנת הנקרא</h1>
+                </div>
+                <p class="text-gray-600">העלי טקסט וקבלי המלצות מותאמות למימדי הבנה ואסטרטגיות</p>
+            </div>
+
+            <!-- Input Section -->
+            <div class="bg-white rounded-2xl shadow-lg p-6 mb-6">
+                <div class="flex items-center gap-2 mb-4">
+                    <span class="text-xl">📤</span>
+                    <h2 class="text-lg font-semibold">הזנת טקסט</h2>
+                </div>
+                
+                <div class="grid md:grid-cols-2 gap-4 mb-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">שכבת גיל:</label>
+                        <select id="gradeLevel" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                            <option value="ב">כיתה ב׳</option>
+                            <option value="ג">כיתה ג׳</option>
+                            <option value="ד" selected>כיתה ד׳</option>
+                            <option value="ה">כיתה ה׳</option>
+                            <option value="ו">כיתה ו׳</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">סוג הטקסט:</label>
+                        <select id="textType" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                            <option value="סיפורי">סיפורי (סיפור, אגדה, מעשייה)</option>
+                            <option value="מידעי">מידעי (מאמר, כתבה, הסבר)</option>
+                            <option value="טיעוני">טיעוני (טור דעה, מכתב שכנוע)</option>
+                            <option value="שירה">שירה (שיר, חרוזים)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <textarea
+                    id="textInput"
+                    placeholder="הדביקי כאן את הטקסט לניתוח..."
+                    class="w-full h-48 p-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 resize-none text-right"
+                ></textarea>
+                
+                <div class="flex justify-between items-center mt-4">
+                    <span id="charCount" class="text-sm text-gray-500">0 תווים</span>
+                    <button
+                        id="analyzeBtn"
+                        onclick="analyzeText()"
+                        class="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl font-medium hover:from-blue-700 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all transform hover:scale-105"
+                    >
+                        <span>✨</span> נתח טקסט
+                    </button>
+                </div>
+
+                <div id="error" class="hidden mt-4 p-3 bg-red-100 border border-red-300 rounded-lg text-red-700 text-sm"></div>
+            </div>
+
+            <!-- Results Section -->
+            <div id="results" class="hidden space-y-6"></div>
+
+            <!-- Quick Reference (shown when no results) -->
+            <div id="quickRef" class="grid md:grid-cols-2 gap-6">
+                <div class="bg-white rounded-2xl shadow-lg p-6">
+                    <h3 class="font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                        <span>🎯</span>
+                        מימדי הבנה
+                    </h3>
+                    <div class="space-y-2">
+                        <div class="p-3 rounded-lg border bg-blue-100 border-blue-300"><div class="font-medium flex items-center gap-2"><span>📝</span>ידע לשוני</div></div>
+                        <div class="p-3 rounded-lg border bg-green-100 border-green-300"><div class="font-medium flex items-center gap-2"><span>👁️</span>הבנת תוכן גלוי</div></div>
+                        <div class="p-3 rounded-lg border bg-purple-100 border-purple-300"><div class="font-medium flex items-center gap-2"><span>🔍</span>הבנת רעיונות סמויים</div></div>
+                        <div class="p-3 rounded-lg border bg-yellow-100 border-yellow-300"><div class="font-medium flex items-center gap-2"><span>💡</span>פרשנות ויישום</div></div>
+                        <div class="p-3 rounded-lg border bg-orange-100 border-orange-300"><div class="font-medium flex items-center gap-2"><span>⚖️</span>הערכה וביקורת</div></div>
+                    </div>
+                </div>
+                
+                <div class="bg-white rounded-2xl shadow-lg p-6">
+                    <h3 class="font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                        <span>🧭</span>
+                        אסטרטגיות קריאה
+                    </h3>
+                    <div class="space-y-2">
+                        <div class="p-3 rounded-lg border bg-teal-100 border-teal-300"><div class="font-medium flex items-center gap-2"><span>🎯</span>לפני הקריאה</div></div>
+                        <div class="p-3 rounded-lg border bg-indigo-100 border-indigo-300"><div class="font-medium flex items-center gap-2"><span>📖</span>במהלך הקריאה</div></div>
+                        <div class="p-3 rounded-lg border bg-pink-100 border-pink-300"><div class="font-medium flex items-center gap-2"><span>✅</span>אחרי הקריאה</div></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Footer -->
+            <div class="text-center mt-8 text-sm text-gray-500">
+                <p>מבוסס על המודל של אילנית שוורץ להוראת הבנת הנקרא</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // מאגר מימדי הבנה
+        const dimensionsData = {
+            "ידע לשוני": {
+                icon: "📝",
+                color: "blue",
+                items: ["הבנת מילים בהקשר", "זיהוי שורש המילה", "ניתוח צורות פועל", "הבנת סימני פיסוק", "זיהוי אזכורים וכינויים"],
+                questions: {
+                    "סיפורי": [
+                        "מהי משמעות המילה '___' בהקשר של הסיפור?",
+                        "מצאו מילה נרדפת למילה '___' בטקסט",
+                        "על מי/מה מתייחס הכינוי '___' במשפט?"
+                    ],
+                    "מידעי": [
+                        "הסבירו את המונח '___' לפי ההקשר",
+                        "מהו שורש המילה '___'? מה הוא מלמד על משמעותה?",
+                        "מצאו בטקסט מילת קישור והסבירו את תפקידה"
+                    ],
+                    "טיעוני": [
+                        "מהי משמעות הביטוי '___' בהקשר הטיעון?",
+                        "מצאו מילים המביעות עמדה בטקסט",
+                        "הסבירו כיצד סימני הפיסוק משפיעים על קריאת הטקסט"
+                    ],
+                    "שירה": [
+                        "מהי משמעות המילה '___' בשיר?",
+                        "מצאו חריזה בשיר וציינו את המילים החורזות",
+                        "אילו מילים חוזרות בשיר? מדוע לדעתכם?"
+                    ]
+                }
+            },
+            "הבנת תוכן גלוי": {
+                icon: "👁️",
+                color: "green",
+                items: ["איתור פרטים מפורשים", "זיהוי רצף אירועים", "הבנת קשרי סיבה-תוצאה", "ארגון ומיון מידע"],
+                questions: {
+                    "סיפורי": [
+                        "מה עשתה הדמות כאשר ___?",
+                        "סדרו את האירועים לפי סדר התרחשותם",
+                        "מדוע הדמות החליטה ל___? (לפי הכתוב)"
+                    ],
+                    "מידעי": [
+                        "מהם שלושת המאפיינים המרכזיים של ___?",
+                        "מה קורה בשלב הראשון/השני/השלישי?",
+                        "מה גורם ל___? מה התוצאה?"
+                    ],
+                    "טיעוני": [
+                        "מהי הטענה המרכזית של הכותב?",
+                        "אילו עובדות מביא הכותב לתמיכה בטענתו?",
+                        "מהי המסקנה שמציג הכותב?"
+                    ],
+                    "שירה": [
+                        "מה מתואר בבית הראשון/השני של השיר?",
+                        "אילו פעולות מבצע הדובר בשיר?",
+                        "היכן ומתי מתרחש השיר?"
+                    ]
+                }
+            },
+            "הבנת רעיונות סמויים": {
+                icon: "🔍",
+                color: "purple",
+                items: ["זיהוי רעיון מרכזי", "הסקת מסקנות", "הבנת סמליות ולשון ציורית", "זיהוי קשרים בין דמויות", "ניבוי המשך"],
+                questions: {
+                    "סיפורי": [
+                        "מהו המסר/הלקח של הסיפור?",
+                        "מה אפשר להסיק על אופי הדמות מהתנהגותה?",
+                        "מה לדעתכם יקרה בהמשך? נמקו"
+                    ],
+                    "מידעי": [
+                        "מהו הרעיון המרכזי של הטקסט?",
+                        "מה אפשר להסיק מהנתונים המוצגים?",
+                        "מדוע לדעתכם הכותב בחר להתחיל/לסיים כך?"
+                    ],
+                    "טיעוני": [
+                        "מהי ההנחה הסמויה בטיעון של הכותב?",
+                        "מה אפשר להסיק על עמדת הכותב?",
+                        "האם יש משהו שהכותב לא אומר במפורש?"
+                    ],
+                    "שירה": [
+                        "מהו הרעיון המרכזי של השיר?",
+                        "מה מסמל ה___ בשיר?",
+                        "מה מרגיש הדובר בשיר? מנין הסקתם?"
+                    ]
+                }
+            },
+            "פרשנות ויישום": {
+                icon: "💡",
+                color: "yellow",
+                items: ["העלאת השערות", "אפיון דמויות והבנת מניעים", "הבחנה בין עובדה לדעה", "יישום בהקשרים חדשים"],
+                questions: {
+                    "סיפורי": [
+                        "מדוע לדעתכם הדמות פעלה כך?",
+                        "כיצד הייתם מתנהגים במקום הדמות?",
+                        "אפיינו את הדמות: מהם תכונותיה?"
+                    ],
+                    "מידעי": [
+                        "כיצד אפשר ליישם את המידע בחיי היומיום?",
+                        "מה ההבדל בין העובדות לפרשנות בטקסט?",
+                        "אילו שאלות נוספות עולות מהטקסט?"
+                    ],
+                    "טיעוני": [
+                        "הבחינו בין העובדות לדעות בטקסט",
+                        "מהם המניעים של הכותב לדעתכם?",
+                        "כיצד הייתם משתמשים בטיעונים אלה?"
+                    ],
+                    "שירה": [
+                        "מדוע לדעתכם המשורר כתב את השיר?",
+                        "כיצד השיר מתקשר לחוויות מחייכם?",
+                        "מה היה משתנה אם השיר נכתב מנקודת מבט אחרת?"
+                    ]
+                }
+            },
+            "הערכה וביקורת": {
+                icon: "⚖️",
+                color: "orange",
+                items: ["זיהוי מטרת הטקסט", "הבנת עמדת הכותב", "הערכת אווירה ונימה", "גיבוש עמדה מנומקת"],
+                questions: {
+                    "סיפורי": [
+                        "מהי האווירה בסיפור? כיצד יצר אותה הכותב?",
+                        "האם הסיום מתאים לסיפור? נמקו",
+                        "מה דעתכם על התנהגות הדמות?"
+                    ],
+                    "מידעי": [
+                        "האם המידע מוצג באופן אמין? נמקו",
+                        "מהי מטרת הכותב בטקסט זה?",
+                        "האם הטקסט משכנע? מדוע?"
+                    ],
+                    "טיעוני": [
+                        "האם הטיעונים משכנעים? נמקו",
+                        "מה דעתכם על עמדת הכותב?",
+                        "אילו טיעונים נגדיים אפשר להעלות?"
+                    ],
+                    "שירה": [
+                        "מה האווירה בשיר? כיצד נוצרה?",
+                        "האם השיר נגע בכם? מדוע?",
+                        "מה דעתכם על הבחירות הלשוניות של המשורר?"
+                    ]
+                }
+            }
+        };
+
+        // עדכון ספירת תווים
+        document.getElementById('textInput').addEventListener('input', function() {
+            document.getElementById('charCount').textContent = this.value.length + ' תווים';
+        });
+
+        // פונקציית ניתוח טקסט
+        function analyzeText() {
+            const text = document.getElementById('textInput').value.trim();
+            const gradeLevel = document.getElementById('gradeLevel').value;
+            const textType = document.getElementById('textType').value;
+            const errorDiv = document.getElementById('error');
+            const resultsDiv = document.getElementById('results');
+            const quickRefDiv = document.getElementById('quickRef');
+
+            if (!text) {
+                errorDiv.textContent = 'נא להזין טקסט לניתוח';
+                errorDiv.classList.remove('hidden');
+                return;
+            }
+
+            if (text.length < 50) {
+                errorDiv.textContent = 'נא להזין טקסט ארוך יותר (לפחות 50 תווים)';
+                errorDiv.classList.remove('hidden');
+                return;
+            }
+
+            errorDiv.classList.add('hidden');
+
+            // ניתוח מאפייני הטקסט
+            const features = analyzeTextFeatures(text, textType, gradeLevel);
+            
+            // הצגת התוצאות
+            displayResults(features, textType, gradeLevel);
+            quickRefDiv.classList.add('hidden');
+            resultsDiv.classList.remove('hidden');
+            
+            // גלילה לתוצאות
+            resultsDiv.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // ניתוח מאפייני הטקסט
+        function analyzeTextFeatures(text, textType, gradeLevel) {
+            const words = text.split(/\s+/).filter(w => w.length > 0);
+            const sentences = text.split(/[.!?]+/).filter(s => s.trim().length > 0);
+            const paragraphs = text.split(/\n\n+/).filter(p => p.trim().length > 0);
+            
+            // חישוב מורכבות
+            const avgWordLength = words.reduce((sum, w) => sum + w.length, 0) / words.length;
+            const avgSentenceLength = words.length / sentences.length;
+            
+            let complexity = 'בינוני';
+            if (avgWordLength > 5 && avgSentenceLength > 15) complexity = 'מאתגר';
+            else if (avgWordLength < 4 && avgSentenceLength < 10) complexity = 'קל';
+
+            // זיהוי מאפיינים מיוחדים
+            const specialFeatures = [];
+            if (text.includes('"') || text.includes('״') || text.includes('אמר') || text.includes('אמרה')) specialFeatures.push('דיאלוג');
+            if (text.match(/[!?]{2,}/) || text.match(/!/g)?.length > 2) specialFeatures.push('הטעמה רגשית');
+            if (text.match(/כמו|דומה ל|כאילו|היה כ/)) specialFeatures.push('לשון ציורית/השוואות');
+            if (text.match(/ראשית|שנית|לסיכום|בנוסף|לעומת זאת|אולם|אך|לכן/)) specialFeatures.push('מילות קישור ומעבר');
+            if (text.match(/לדעתי|אני חושב|נראה לי|לטעמי|אני מאמין/)) specialFeatures.push('הבעת עמדה');
+            if (paragraphs.length > 2) specialFeatures.push('מבנה פסקאות');
+            if (text.match(/\d+%|\d+\s*(אחוז|ק"מ|מטר|שנים|ימים)/)) specialFeatures.push('נתונים מספריים');
+
+            return {
+                wordCount: words.length,
+                sentenceCount: sentences.length,
+                paragraphCount: paragraphs.length,
+                avgWordLength: avgWordLength.toFixed(1),
+                avgSentenceLength: avgSentenceLength.toFixed(1),
+                complexity,
+                specialFeatures
+            };
+        }
+
+        // בחירת מימדים רלוונטיים
+        function getRelevantDimensions(textType, gradeLevel, features) {
+            const dimensions = [];
+            const gradeNum = {'ב': 2, 'ג': 3, 'ד': 4, 'ה': 5, 'ו': 6}[gradeLevel];
+
+            // תמיד רלוונטי: הבנת תוכן גלוי
+            dimensions.push({
+                name: "הבנת תוכן גלוי",
+                relevance: "גבוהה",
+                reason: "מימד בסיסי וחיוני להבנת כל טקסט - איתור מידע מפורש"
+            });
+
+            // ידע לשוני
+            dimensions.push({
+                name: "ידע לשוני",
+                relevance: features.complexity === 'מאתגר' ? "גבוהה" : "בינונית",
+                reason: features.complexity === 'מאתגר' 
+                    ? "הטקסט מכיל אוצר מילים עשיר שדורש התייחסות"
+                    : "חשוב לוודא הבנת מילים ומושגים בסיסיים"
+            });
+
+            // הבנת רעיונות סמויים
+            if (textType === 'סיפורי' || textType === 'שירה') {
+                dimensions.push({
+                    name: "הבנת רעיונות סמויים",
+                    relevance: "גבוהה",
+                    reason: `טקסט ${textType} מכיל רעיונות ומשמעויות מעבר לכתוב במפורש`
+                });
+            } else {
+                dimensions.push({
+                    name: "הבנת רעיונות סמויים",
+                    relevance: "בינונית",
+                    reason: "חשוב לזהות רעיונות מרכזיים ולהסיק מסקנות מהמידע"
+                });
+            }
+
+            // פרשנות ויישום
+            if (gradeNum >= 4) {
+                dimensions.push({
+                    name: "פרשנות ויישום",
+                    relevance: textType === 'טיעוני' ? "גבוהה" : "בינונית",
+                    reason: textType === 'טיעוני'
+                        ? "טקסט טיעוני דורש הבחנה בין עובדה לדעה והבנת מניעים"
+                        : "מתאים לגיל - יכולת לפרש ולהעביר להקשרים חדשים"
+                });
+            }
+
+            // הערכה וביקורת
+            if (gradeNum >= 5) {
+                dimensions.push({
+                    name: "הערכה וביקורת",
+                    relevance: textType === 'טיעוני' ? "גבוהה" : "בינונית",
+                    reason: "מתאים לגיל - פיתוח חשיבה ביקורתית והבעת עמדה מנומקת"
+                });
+            }
+
+            return dimensions;
+        }
+
+        // בחירת אסטרטגיות
+        function getRelevantStrategies(textType, gradeLevel, features) {
+            const strategies = [];
+            const gradeNum = {'ב': 2, 'ג': 3, 'ד': 4, 'ה': 5, 'ו': 6}[gradeLevel];
+
+            // לפני הקריאה
+            strategies.push({
+                phase: "לפני הקריאה",
+                name: "הפעלת ידע קודם",
+                tool: "מגדלת הידע הקודם",
+                description: "שאלו את התלמידים: מה אתם כבר יודעים על הנושא? מה חוויתם בקשר לזה?"
+            });
+
+            strategies.push({
+                phase: "לפני הקריאה",
+                name: "ניבוי",
+                tool: "מכונת הזמן להשערות",
+                description: "לפי הכותרת והמילים הראשונות - על מה לדעתכם יהיה הטקסט?"
+            });
+
+            // במהלך הקריאה
+            if (features.complexity === 'מאתגר') {
+                strategies.push({
+                    phase: "במהלך הקריאה",
+                    name: "קריאה חוזרת",
+                    tool: "כפתור הקריאה החוזרת",
+                    description: "הטקסט מורכב - עודדו קריאה חוזרת של קטעים קשים"
+                });
+            }
+
+            strategies.push({
+                phase: "במהלך הקריאה",
+                name: "ניטור הבנה",
+                tool: "גלאי אי-הבנה",
+                description: "עצרו בנקודות מפתח ושאלו: האם הכל ברור? מה עוד לא מובן?"
+            });
+
+            if (textType === 'סיפורי') {
+                strategies.push({
+                    phase: "במהלך הקריאה",
+                    name: "יצירת דימויים מנטליים",
+                    tool: "בועת הדמיון",
+                    description: "בקשו מהתלמידים לעצום עיניים ולדמיין את הסצנה"
+                });
+            }
+
+            strategies.push({
+                phase: "במהלך הקריאה",
+                name: "זיהוי רעיונות מרכזיים",
+                tool: "מצפן הרעיונות",
+                description: "בכל פסקה - מהו הדבר הכי חשוב שנאמר כאן?"
+            });
+
+            // אחרי הקריאה
+            strategies.push({
+                phase: "אחרי הקריאה",
+                name: "סיכום",
+                tool: "מערכת כריזה לסיכום",
+                description: "ספרו במילים שלכם: על מה הטקסט? מה למדנו?"
+            });
+
+            strategies.push({
+                phase: "אחרי הקריאה",
+                name: "יצירת קשרים אישיים",
+                tool: "מחולל הקישורים האישיים",
+                description: "איך הטקסט מתקשר לחיים שלכם? למה עוד הוא מזכיר לכם?"
+            });
+
+            if (gradeNum >= 4) {
+                strategies.push({
+                    phase: "אחרי הקריאה",
+                    name: "חשיבה ביקורתית",
+                    tool: "משקפי הביקורת",
+                    description: "מה דעתכם על מה שקראתם? האם אתם מסכימים?"
+                });
+            }
+
+            return strategies;
+        }
+
+        // יצירת טיפים
+        function getTeachingTips(textType, gradeLevel, features) {
+            const tips = [];
+            const gradeNum = {'ב': 2, 'ג': 3, 'ד': 4, 'ה': 5, 'ו': 6}[gradeLevel];
+
+            tips.push(`התאימו את קצב הקריאה לרמת המורכבות (${features.complexity}) של הטקסט`);
+
+            if (features.specialFeatures.includes('דיאלוג')) {
+                tips.push("נצלו את הדיאלוג לקריאה בקולות ולהבנת הדמויות");
+            }
+
+            if (features.specialFeatures.includes('לשון ציורית/השוואות')) {
+                tips.push("התעכבו על הלשון הציורית - מה היא מוסיפה להבנה?");
+            }
+
+            if (textType === 'מידעי') {
+                tips.push("השתמשו בארגוניות גרפיות לארגון המידע");
+            }
+
+            if (textType === 'סיפורי' && gradeNum <= 4) {
+                tips.push("השתמשו באיורים ובהדמיות לחיזוק ההבנה");
+            }
+
+            if (gradeNum >= 5) {
+                tips.push("עודדו דיון קבוצתי ושיתוף בפרשנויות שונות");
+            }
+
+            tips.push("תנו לתלמידים זמן לחשיבה לפני שמבקשים תשובות");
+
+            return tips;
+        }
+
+        // הצגת התוצאות
+        function displayResults(features, textType, gradeLevel) {
+            const resultsDiv = document.getElementById('results');
+            
+            const dimensions = getRelevantDimensions(textType, gradeLevel, features);
+            const strategies = getRelevantStrategies(textType, gradeLevel, features);
+            const tips = getTeachingTips(textType, gradeLevel, features);
+
+            const complexityColors = {
+                'קל': 'bg-green-100 text-green-800 border-green-300',
+                'בינוני': 'bg-yellow-100 text-yellow-800 border-yellow-300',
+                'מאתגר': 'bg-red-100 text-red-800 border-red-300'
+            };
+
+            const relevanceColors = {
+                'גבוהה': 'bg-green-500 text-white',
+                'בינונית': 'bg-yellow-500 text-white'
+            };
+
+            const phaseColors = {
+                'לפני הקריאה': 'bg-teal-50 border-teal-200',
+                'במהלך הקריאה': 'bg-indigo-50 border-indigo-200',
+                'אחרי הקריאה': 'bg-pink-50 border-pink-200'
+            };
+
+            const phaseIcons = {
+                'לפני הקריאה': '🎯',
+                'במהלך הקריאה': '📖',
+                'אחרי הקריאה': '✅'
+            };
+
+            let html = `
+                <!-- סקירת הטקסט -->
+                <div class="bg-white rounded-2xl shadow-lg p-6">
+                    <div class="flex items-center gap-2 mb-4">
+                        <span class="text-xl">👁️</span>
+                        <h2 class="text-lg font-semibold">סקירת הטקסט</h2>
+                    </div>
+                    
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        <div class="bg-gray-50 rounded-xl p-4 text-center">
+                            <div class="text-sm text-gray-500 mb-1">סוג הטקסט</div>
+                            <div class="font-semibold text-gray-800">${textType}</div>
+                        </div>
+                        <div class="bg-gray-50 rounded-xl p-4 text-center">
+                            <div class="text-sm text-gray-500 mb-1">רמת מורכבות</div>
+                            <span class="px-3 py-1 rounded-full text-sm font-medium border ${complexityColors[features.complexity]}">${features.complexity}</span>
+                        </div>
+                        <div class="bg-gray-50 rounded-xl p-4 text-center">
+                            <div class="text-sm text-gray-500 mb-1">מספר מילים</div>
+                            <div class="font-semibold text-gray-800">${features.wordCount}</div>
+                        </div>
+                        <div class="bg-gray-50 rounded-xl p-4 text-center">
+                            <div class="text-sm text-gray-500 mb-1">שכבת גיל</div>
+                            <div class="font-semibold text-gray-800">כיתה ${gradeLevel}׳</div>
+                        </div>
+                    </div>
+
+                    ${features.specialFeatures.length ? `
+                        <div class="mt-4 p-3 bg-purple-50 rounded-xl">
+                            <div class="text-sm font-medium text-purple-800 mb-2">מאפיינים שזוהו בטקסט:</div>
+                            <div class="flex flex-wrap gap-2">
+                                ${features.specialFeatures.map(f => `<span class="px-2 py-1 bg-purple-100 text-purple-800 rounded-lg text-sm">✨ ${f}</span>`).join('')}
+                            </div>
+                        </div>
+                    ` : ''}
+                </div>
+
+                <!-- מימדי הבנה מומלצים -->
+                <div class="bg-white rounded-2xl shadow-lg p-6">
+                    <div class="flex items-center gap-2 mb-4">
+                        <span class="text-xl">🎯</span>
+                        <h2 class="text-lg font-semibold">מימדי הבנה מומלצים</h2>
+                        <span class="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs">${dimensions.length}</span>
+                    </div>
+                    
+                    <div class="space-y-4">
+                        ${dimensions.map(dim => {
+                            const dimData = dimensionsData[dim.name];
+                            const questions = dimData.questions[textType] || dimData.questions['סיפורי'];
+                            return `
+                                <div class="border border-gray-200 rounded-xl p-4 hover:shadow-md transition-shadow">
+                                    <div class="flex items-start justify-between mb-2">
+                                        <h3 class="font-semibold text-gray-800 flex items-center gap-2">
+                                            <span>${dimData.icon}</span>
+                                            ${dim.name}
+                                        </h3>
+                                        <span class="px-2 py-1 rounded-full text-xs font-medium ${relevanceColors[dim.relevance]}">${dim.relevance}</span>
+                                    </div>
+                                    <p class="text-sm text-gray-600 mb-3">${dim.reason}</p>
+                                    
+                                    <div class="bg-blue-50 rounded-lg p-3">
+                                        <div class="text-xs font-medium text-blue-800 mb-2">שאלות לדוגמה:</div>
+                                        <ul class="space-y-1">
+                                            ${questions.map(q => `
+                                                <li class="text-sm text-blue-900 flex items-start gap-2">
+                                                    <span class="text-blue-500">•</span>
+                                                    ${q}
+                                                </li>
+                                            `).join('')}
+                                        </ul>
+                                    </div>
+                                </div>
+                            `;
+                        }).join('')}
+                    </div>
+                </div>
+
+                <!-- אסטרטגיות מומלצות -->
+                <div class="bg-white rounded-2xl shadow-lg p-6">
+                    <div class="flex items-center gap-2 mb-4">
+                        <span class="text-xl">🧭</span>
+                        <h2 class="text-lg font-semibold">אסטרטגיות מומלצות</h2>
+                        <span class="px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs">${strategies.length}</span>
+                    </div>
+                    
+                    <div class="grid gap-4">
+                        ${['לפני הקריאה', 'במהלך הקריאה', 'אחרי הקריאה'].map(phase => {
+                            const phaseStrategies = strategies.filter(s => s.phase === phase);
+                            if (!phaseStrategies.length) return '';
+                            
+                            return `
+                                <div class="rounded-xl p-4 border ${phaseColors[phase]}">
+                                    <h4 class="font-medium text-gray-800 mb-3 flex items-center gap-2">
+                                        ${phaseIcons[phase]} ${phase}
+                                    </h4>
+                                    <div class="space-y-3">
+                                        ${phaseStrategies.map(strat => `
+                                            <div class="bg-white rounded-lg p-3 shadow-sm">
+                                                <div class="font-medium text-gray-800">${strat.name}</div>
+                                                <div class="text-sm text-purple-600 mt-1">🔧 כלי: ${strat.tool}</div>
+                                                <div class="text-sm text-gray-600 mt-1">${strat.description}</div>
+                                            </div>
+                                        `).join('')}
+                                    </div>
+                                </div>
+                            `;
+                        }).join('')}
+                    </div>
+                </div>
+
+                <!-- טיפים להוראה -->
+                <div class="bg-gradient-to-r from-yellow-50 to-orange-50 rounded-2xl shadow-lg p-6">
+                    <div class="flex items-center gap-2 mb-4">
+                        <span class="text-xl">💡</span>
+                        <h2 class="text-lg font-semibold text-gray-800">טיפים להוראה</h2>
+                    </div>
+                    <div class="space-y-2">
+                        ${tips.map(tip => `
+                            <div class="flex items-start gap-3 bg-white/70 rounded-lg p-3">
+                                <span class="text-yellow-500 text-lg">💡</span>
+                                <span class="text-gray-700">${tip}</span>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+
+                <!-- כפתור ניתוח חדש -->
+                <div class="text-center">
+                    <button onclick="resetAnalysis()" class="px-6 py-3 bg-gray-200 text-gray-700 rounded-xl font-medium hover:bg-gray-300 transition-colors">
+                        🔄 ניתוח טקסט חדש
+                    </button>
+                </div>
+            `;
+
+            resultsDiv.innerHTML = html;
+        }
+
+        // איפוס
+        function resetAnalysis() {
+            document.getElementById('results').classList.add('hidden');
+            document.getElementById('quickRef').classList.remove('hidden');
+            document.getElementById('textInput').value = '';
+            document.getElementById('charCount').textContent = '0 תווים';
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+    </script>
+</body>
+</html>
